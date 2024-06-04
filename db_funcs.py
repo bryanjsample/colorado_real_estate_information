@@ -146,7 +146,7 @@ def create_tables():
         PARCEL INTEGER PRIMARY KEY,
         LOCATION TEXT,
         LOCATIONZIP TEXT,
-        PLATNUM TEXT,
+        PLATINUM TEXT,
         PARTIALLEGAL TEXT,
         CmntyArea TEXT,
         SchoolDist TEXT,
@@ -154,7 +154,7 @@ def create_tables():
         MARKETVALUE FLOAT,
         ASSESSEDVALUE FLOAT,
         LANDCODE INTEGER,
-        LANDCODEDESCR TEXT,
+        LANDCODESCR TEXT,
         Acreage FLOAT,
         IMPCOUNT INTEGER,
         IMPSTATECODE INTEGER,
@@ -180,11 +180,7 @@ def create_tables():
         MAILADR TEXT,
         MAILCITY TEXT,
         MAILSTATE TEXT,
-        MAILZIPCODE TEXT,
-        MAILINTLPROBADR TEXT,
-        Column1 TEXT,
-        _1 TEXT,
-        _2 TEXT
+        MAILZIPCODE TEXT
     );
     ''']
 
@@ -192,6 +188,7 @@ def create_tables():
     cursor = conn.cursor()
     for command in commands:
         cursor.execute(command)
+    conn.commit()
     cursor.close()
 
 def populate_tables():
@@ -265,18 +262,21 @@ def populate_tables():
         cursor = conn.cursor()
         replace_ending_comma('./csv_files/filtered_epc_parcels.csv')
         with open('./csv_files/filtered_epc_parcels.csv', 'r') as f:
-            contents = csv.reader(f)
-            insert_statement = 'INSERT INTO ElPasoCountyParcels (LastUpdate, PARCEL, LOCATION, LOCATIONZIP, PLATINUM, PARTIALLEGAL, CmntyArea, SchoolDist, ZONING, MARKETVALUE, ASSESSEDVALUE, LANDCODE, LANDCODESCR, Acreage, IMPCOUNT, IMPSTATECODE, IMPSTATEDESCR, IMPLOCALCODE, IMPLOCALDESCR, YearBlt, UNITS, RESSTYLE, Rooms, Beds, Baths, TotalFinishedArea, TotalBSMT, FinishedBSMT, IMPSQFT, SALEDATE, SALEPRICE, AsrSaleCmn, OWNER1, OWNER2, OWNER3, MAILADR, MAILCITY, MAILSTATE, MAILZIPCODE, MAILINTLPROBADR, Column1, _1, _2) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-            cursor.executemany(insert_statement, contents)
+            contents = list(csv.reader(f))
+            print(len(contents))
+            filtered_contents = [x for x in contents if len(x) == 39]
+            print(len(filtered_contents))
+            insert_statement = 'INSERT INTO ElPasoCountyParcels (LastUpdate, PARCEL, LOCATION, LOCATIONZIP, PLATINUM, PARTIALLEGAL, CmntyArea, SchoolDist, ZONING, MARKETVALUE, ASSESSEDVALUE, LANDCODE, LANDCODESCR, Acreage, IMPCOUNT, IMPSTATECODE, IMPSTATEDESCR, IMPLOCALCODE, IMPLOCALDESCR, YearBlt, UNITS, RESSTYLE, Rooms, Beds, Baths, TotalFinishedArea, TotalBSMT, FinishedBSMT, IMPSQFT, SALEDATE, SALEPRICE, AsrSaleCmnt, OWNER1, OWNER2, OWNER3, MAILADR, MAILCITY, MAILSTATE, MAILZIPCODE) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            cursor.executemany(insert_statement, filtered_contents)
         conn.commit()
         conn.close()
-    # active_ass()
+    active_ass()
     active_hoa()
-    # active_prop()
-    # active_companies()
-    # active_responsible()
-    # active_developers()
-    # parcels()
+    active_prop()
+    active_companies()
+    active_responsible()
+    active_developers()
+    parcels()
 
 
 if __name__ == "__main__":
