@@ -278,6 +278,13 @@ def populate_tables():
     active_developers()
     parcels()
 
+def query_database(sql_statement:str, condition_values:list|None=None):
+    conn = sqlite3.connect('/Users/bryanjsample/Documents/code/github/hoa_prop_managers/real_estate_info.db')
+    cursor = conn.cursor()
+    cursor.execute(sql_statement, condition_values)
+    results = cursor.fetchall()
+    cursor.close()
+    return results
 
 if __name__ == "__main__":
     populate_tables()
