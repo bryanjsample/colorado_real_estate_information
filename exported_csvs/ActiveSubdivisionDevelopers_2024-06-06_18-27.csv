@@ -1,0 +1,4 @@
+"id","BusinessName","SupervisorName","CredentialTypePrefix","CredentialNumber","LicenseFirstIssueDate","LicenseLastRenewedDate","LicenseExpirationDate","Attention","AddressLine1","AddressLine2","City","State","County","ZipCode","Description"
+"11","Falcon Pointe Condominium Association, Inc.","John Palmquist","SD","100068308","03/16/2016","01/01/2024","12/31/2024","Lisa Mutz Nelson","175 Lake St","","Avon","CO","","81620","Active"
+"29","Peak 8 Properties Llc","John Palmquist","SD","100052231","08/20/2014","01/01/2024","12/31/2024","","Po Box 6879","","Breckenridge","CO","","80424","Active"
+"31","Poste Montane Lodge Condominium Association, Inc.","John Palmquist","SD","100069517","06/08/2016","01/01/2024","12/31/2024","General Manager","PO Box 5480","76 Avondale Lane,","Avon","CO","","81620","Active"
