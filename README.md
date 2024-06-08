@@ -2,8 +2,8 @@
 
 ## Installation
 
-1. Clone appropriate executable file from Github Repo onto your local system.
-2. Open executable.
+1. Click on `Tags` link underneath `Releases` on the righthand side of the browser.
+2. Download the appropriate executable file.
 
 ## Usage
 
