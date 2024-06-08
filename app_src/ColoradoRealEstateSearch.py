@@ -113,10 +113,11 @@ class Template(QMainWindow):
     def swap_to_table_layout(self, results:List[Any]) -> None:
         table = QTableWidget()
         table.setRowCount(len(results))
-        table.setColumnCount(len(self.querying_table_columns))
         if self.querying_table_name == 'ElPasoCountyParcels':
+            table.setColumnCount(len(self.querying_table_columns))
             headers = self.querying_table_columns
         else:
+            table.setColumnCount(len(self.querying_table_columns) + 1)
             headers = ['Google Link'] + self.querying_table_columns
         table.setHorizontalHeaderLabels(headers)
         for row_i, row in enumerate(results):
