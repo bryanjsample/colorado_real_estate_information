@@ -5,7 +5,7 @@ import os
 import sys
 
 from typing import List, Any
-from PySide6.QtCore import Qt, Slot
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (QMainWindow, QApplication, QFileDialog, QLabel, QTableWidget, QTableWidgetItem, QDateEdit, QFormLayout, QHBoxLayout, QVBoxLayout, QWidget, QLineEdit, QPushButton, QToolBar, QStatusBar, QMenuBar)
 from datetime import datetime
