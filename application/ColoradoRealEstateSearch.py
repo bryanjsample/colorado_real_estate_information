@@ -11,7 +11,7 @@ from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (QMainWindow, QApplication, QFileDialog, QLabel, QTableWidget, QTableWidgetItem, QDateEdit, QFormLayout, QHBoxLayout, QVBoxLayout, QWidget, QLineEdit, QPushButton, QToolBar, QStatusBar, QMenuBar)
 from datetime import datetime
 
-# pyinstaller --onefile --windowed -i images/MyIcon.icns --add-data real_estate_info.db:. main.py     
+# pyinstaller --onefile --windowed -i images/MyIcon.icns --add-data real_estate_info.db:. ColoradoRealEstateSearch.py
 
 class Template(QMainWindow):
     def __init__(self) -> None:
@@ -112,15 +112,24 @@ class Template(QMainWindow):
         table = QTableWidget()
         table.setRowCount(len(results))
         table.setColumnCount(len(self.querying_table_columns))
-        table.setHorizontalHeaderLabels(['Google Link'] + self.querying_table_columns)
+        if self.querying_table_name == 'ElPasoCountyParcels':
+            headers = self.querying_table_columns
+        else:
+            headers = ['Google Link'] + self.querying_table_columns
+        table.setHorizontalHeaderLabels(headers)
         for row_i, row in enumerate(results):
-            google_link = self.get_google_search_link(row)
-            self.add_link_to_dict(row_i, google_link)
-            link_item = QTableWidgetItem('Double Click to Google')
-            table.setItem(row_i, 0, link_item)
-            for column_i, column in enumerate(row):
-                item = QTableWidgetItem(str(column))
-                table.setItem(row_i, column_i + 1, item)
+            if self.querying_table_name == 'ElPasoCountyParcels':
+                for column_i, column in enumerate(row):
+                    item = QTableWidgetItem(str(column))
+                    table.setItem(row_i, column_i, item)
+            else:
+                google_link = self.get_google_search_link(row)
+                self.add_link_to_dict(row_i, google_link)
+                link_item = QTableWidgetItem('Double Click to Google')
+                table.setItem(row_i, 0, link_item)
+                for column_i, column in enumerate(row):
+                    item = QTableWidgetItem(str(column))
+                    table.setItem(row_i, column_i + 1, item)
         table.cellClicked.connect(self.google_in_browser)
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -152,7 +161,7 @@ class Template(QMainWindow):
         return names
 
     def get_google_search_link(self, row:List[str]):
-        if self.querying_table_name in 'ElPasoCountyParcels':
+        if self.querying_table_name == 'ElPasoCountyParcels':
             return False
         elif self.querying_table_name in ['ActiveAssociateBrokers', 'ActiveIndividualProprietors', 'ActiveResponsibleBrokers']:
             first_name_index = self.querying_table_columns.index('FirstName')
@@ -176,7 +185,7 @@ class Template(QMainWindow):
         self.querying_table_google_links[row_i] = google_link
 
     def google_in_browser(self, row, column):
-        if column != 0:
+        if column != 0 or self.querying_table_name == 'ElPasoCountyParcels':
             pass
         else:
             google_link = self.querying_table_google_links[int(row)]
