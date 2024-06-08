@@ -8,7 +8,7 @@ import webbrowser
 from typing import List, Any, Dict
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction
-from PySide6.QtWidgets import (QMainWindow, QApplication, QFileDialog, QLabel, QTableWidget, QTableWidgetItem, QDateEdit, QFormLayout, QHBoxLayout, QVBoxLayout, QWidget, QLineEdit, QPushButton, QToolBar, QStatusBar, QMenuBar)
+from PySide6.QtWidgets import (QMainWindow, QApplication, QFileDialog, QLabel, QTableWidget, QTableWidgetItem, QDateEdit, QFormLayout, QHBoxLayout, QVBoxLayout, QWidget, QLineEdit, QPushButton, QToolBar, QStatusBar)
 from datetime import datetime
 
 # pyinstaller --onefile --windowed -i images/MyIcon.icns --add-data real_estate_info.db:. ColoradoRealEstateSearch.py
@@ -42,26 +42,25 @@ class Template(QMainWindow):
         self.querying_table_google_links:Dict[int, str] = {}
         self.path_to_app = self.resolve_app_path()
 
-
-    def create_toolbar_actions(self, table_name:str, toolbar_button:QAction, toolbar:QToolBar):
+    def create_toolbar_actions(self, table_name:str, toolbar_button:QAction, toolbar:QToolBar) -> None:
         toolbar_button.setStatusTip(f'Click to query {table_name}')
         toolbar_button.setCheckable(True)
         toolbar_button.triggered.connect(lambda: self.swap_to_query_layout(table_name))
         toolbar.addAction(toolbar_button)
 
-    def uncheck_toolbar_buttons(self):
+    def uncheck_toolbar_buttons(self) -> None:
         for toolbar_button in self.tables.values():
             if toolbar_button.isChecked():
                 toolbar_button.setChecked(False)
 
-    def resolve_app_path(self):
+    def resolve_app_path(self) -> str:
         if getattr(sys, 'frozen', False):
             app_path = sys._MEIPASS
         elif __file__:
             app_path = os.path.dirname(os.path.abspath(__file__))
         return app_path
 
-    def swap_to_query_layout(self, table_name:str):
+    def swap_to_query_layout(self, table_name:str) -> None:
         self.setWindowTitle(f'Query {table_name}')
         self.uncheck_toolbar_buttons()
         self.tables[table_name].setChecked(True)
@@ -100,7 +99,7 @@ class Template(QMainWindow):
         main_widget.setLayout(main_layout)
         self.setCentralWidget(main_widget)
 
-    def swap_to_main_layout(self):
+    def swap_to_main_layout(self) -> None:
         layout = QHBoxLayout()
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("Select a table from the ribbon to run queries against it."))
@@ -108,7 +107,7 @@ class Template(QMainWindow):
         widget.setLayout(layout)
         self.setCentralWidget(widget)
 
-    def swap_to_table_layout(self, results:List[Any]):
+    def swap_to_table_layout(self, results:List[Any]) -> None:
         table = QTableWidget()
         table.setRowCount(len(results))
         table.setColumnCount(len(self.querying_table_columns))
@@ -142,7 +141,7 @@ class Template(QMainWindow):
         main_widget.setLayout(layout)
         self.setCentralWidget(main_widget)
 
-    def export_to_csv(self, results:List[Any], column_names:List[str]):
+    def export_to_csv(self, results:List[Any], column_names:List[str]) -> None:
         target_dir_name = QFileDialog.getExistingDirectory(self, self.tr('Select a Folder to Export CSV File Into'), '~', QFileDialog.Option.ShowDirsOnly | QFileDialog.Option.DontResolveSymlinks)
         dt = datetime.now().strftime('%Y-%m-%d_%H-%M')
         csv_name = f'{self.querying_table_name}_{dt}.csv'
@@ -151,7 +150,7 @@ class Template(QMainWindow):
             writer.writerow(column_names)
             writer.writerows(results)
 
-    def get_table_column_titles(self, table_name:str):
+    def get_table_column_titles(self, table_name:str) -> List[str]:
         conn = sqlite3.connect(os.path.join(self.path_to_app, 'real_estate_info.db'))
         cursor = conn.cursor()
         cursor.execute(f'SELECT * FROM {table_name.replace(" ", "")} LIMIT 1;')
@@ -160,7 +159,7 @@ class Template(QMainWindow):
         cursor.close()
         return names
 
-    def get_google_search_link(self, row:List[str]):
+    def get_google_search_link(self, row:List[str]) -> str:
         if self.querying_table_name == 'ElPasoCountyParcels':
             return False
         elif self.querying_table_name in ['ActiveAssociateBrokers', 'ActiveIndividualProprietors', 'ActiveResponsibleBrokers']:
@@ -181,17 +180,17 @@ class Template(QMainWindow):
         name = '+'.join(name)
         return f'https://www.google.com/search?q={name}+{zip_code}'
     
-    def add_link_to_dict(self, row_i:int, google_link:str):
+    def add_link_to_dict(self, row_i:int, google_link:str) -> None:
         self.querying_table_google_links[row_i] = google_link
 
-    def google_in_browser(self, row, column):
+    def google_in_browser(self, row, column) -> None:
         if column != 0 or self.querying_table_name == 'ElPasoCountyParcels':
             pass
         else:
             google_link = self.querying_table_google_links[int(row)]
             webbrowser.open_new(google_link)
 
-    def submit_query(self):
+    def submit_query(self) -> None:
         condition_columns = []
         condition_values = []
         for column_name, query_value in self.left_column_values:
@@ -216,13 +215,13 @@ class Template(QMainWindow):
         results = self.query_database(sql_statement=query, condition_values=condition_values)
         self.swap_to_table_layout(results)
 
-    def print_query(self, results:List[Any]):
+    def print_query(self, results:List[Any]) -> None:
         print('  |  '.join(self.querying_table_columns))
         for row in results:
             row_strs = [str(i) for i in row]
             print('  |  '.join(row_strs))
 
-    def query_database(self, sql_statement:str, condition_values:list|None=None):
+    def query_database(self, sql_statement:str, condition_values:list|None=None) -> List[Any]:
         conn = sqlite3.connect(os.path.join(self.path_to_app, 'real_estate_info.db'))
         cursor = conn.cursor()
         cursor.execute(sql_statement, condition_values)
