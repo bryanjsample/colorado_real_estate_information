@@ -1,11 +1,13 @@
 import sys
 import sqlite3
 import csv
+import os
+import sys
 
 from typing import List, Any
 from PySide6.QtCore import Qt, Slot
 from PySide6.QtGui import QAction
-from PySide6.QtWidgets import (QMainWindow, QApplication, QCalendarWidget, QLabel, QTableWidget, QTableWidgetItem, QDateEdit, QFormLayout, QHBoxLayout, QVBoxLayout, QWidget, QLineEdit, QComboBox, QPushButton, QToolBar, QStatusBar, QMenuBar)
+from PySide6.QtWidgets import (QMainWindow, QApplication, QFileDialog, QLabel, QTableWidget, QTableWidgetItem, QDateEdit, QFormLayout, QHBoxLayout, QVBoxLayout, QWidget, QLineEdit, QPushButton, QToolBar, QStatusBar, QMenuBar)
 from datetime import datetime
 
 class Template(QMainWindow):
@@ -34,6 +36,8 @@ class Template(QMainWindow):
         self.right_column_values:List[tuple[str, QLineEdit]] = []
         self.querying_table_name = None
         self.querying_table_columns = None
+        self.path_to_app = self.resolve_app_path()
+        print(f'{self.path_to_app=}')
 
     def create_toolbar_actions(self, table_name:str, toolbar_button:QAction, toolbar:QToolBar):
         toolbar_button.setStatusTip(f'Click to query {table_name}')
@@ -45,6 +49,13 @@ class Template(QMainWindow):
         for toolbar_button in self.tables.values():
             if toolbar_button.isChecked():
                 toolbar_button.setChecked(False)
+
+    def resolve_app_path(self):
+        if getattr(sys, 'frozen', False):
+            app_path = sys._MEIPASS
+        elif __file__:
+            app_path = os.path.dirname(os.path.abspath(__file__))
+        return app_path
 
     def swap_to_query_layout(self, table_name:str):
         self.setWindowTitle(f'Query {table_name}')
@@ -114,16 +125,17 @@ class Template(QMainWindow):
         self.setCentralWidget(main_widget)
 
     def export_to_csv(self, results:List[Any], column_names:List[str]):
+        target_dir_name = QFileDialog.getExistingDirectory(self, self.tr('Select a Folder to Export CSV File Into'), '~', QFileDialog.Option.ShowDirsOnly | QFileDialog.Option.DontResolveSymlinks)
         dt = datetime.now().strftime('%Y-%m-%d_%H-%M')
         csv_name = f'{self.querying_table_name}_{dt}.csv'
-        with open(f'../exported_csvs/{csv_name}', 'w', newline='', encoding='utf-8') as f:
+        with open(f'{target_dir_name}/{csv_name}', 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f, quoting=csv.QUOTE_ALL)
             writer.writerow(column_names)
             writer.writerows(results)
 
 
     def get_table_column_titles(self, table_name:str):
-        conn = sqlite3.connect('./real_estate_info.db')
+        conn = sqlite3.connect(f'{self.path_to_app}/real_estate_info.db')
         cursor = conn.cursor()
         cursor.execute(f'SELECT * FROM {table_name.replace(" ", "")} LIMIT 1;')
         columns = cursor.description
@@ -163,7 +175,7 @@ class Template(QMainWindow):
             print('  |  '.join(row_strs))
 
     def query_database(self, sql_statement:str, condition_values:list|None=None):
-        conn = sqlite3.connect('./real_estate_info.db')
+        conn = sqlite3.connect(f'{self.path_to_app}/real_estate_info.db')
         cursor = conn.cursor()
         cursor.execute(sql_statement, condition_values)
         results = cursor.fetchall()
