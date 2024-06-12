@@ -40,7 +40,7 @@ class Template(QMainWindow):
         for table_name, toolbar_button in self.tables.items():
             self.create_toolbar_actions(table_name, toolbar_button, toolbar)
         self.setStatusBar(QStatusBar(self))
-        self.swap_to_main_layout()
+        self.swap_to_message_layout("Select a table from the ribbon to run queries against it. ElPasoCountyParcels takes longer to load than the others.")
         self.left_column_values:List[Any] = []
         self.right_column_values:List[Any] = []
         self.querying_table_name:str | None = None
@@ -70,7 +70,70 @@ class Template(QMainWindow):
         self.setWindowTitle(f'Query {table_name}')
         self.uncheck_toolbar_buttons()
         self.tables[table_name].setChecked(True)
-        self.querying_table_columns = [col for col in self.get_table_column_titles(table_name)]
+        unneeded_columns = [
+            'id',
+            'MiddleName',
+            'Suffix',
+            'Phone',
+            'SupervisionStart',
+            'LicenseFirstIssueDate',
+            'LicenseExpirationDate',
+            'Status',
+            'LicenseLastRenewedDate',
+            'ID',
+            'AddressLine2',
+            'AddressLine1',
+            'MailZipCodePlus4',
+            'LastUpdate',
+            'PLATINUM',
+            'PARTIALLEGAL',
+            'MARKETVALUE',
+            'ASSESSEDVALUE',
+            'LANDCODE',
+            'Acreage',
+            'IMPCOUNT',
+            'IMPSTATECODE',
+            'IMPLOCALCODE',
+            'TotalFinishedArea',
+            'TotalBSMT',
+            'FinishedBSMT',
+            'IMPSQFT',
+            'SALEDATE',
+            'SALEPRICE',
+            'AsrSaleCmnt',
+            'OWNER1',
+            'OWNER2',
+            'OWNER3',
+            'MAILADR',
+            ''
+        ]
+        dropdown_columns = [
+            'City',
+            'State',
+            'County',
+            'ZipCode',
+            'MailZipCode',
+            'Managed',
+            'CredentialTypePrefix',
+            'LicenseType',
+            'Description',
+            'CmntyArea',
+            'SchoolDist',
+            'ZONING',
+            'LANDCODESCR',
+            'IMPSTATEDESCR',
+            'IMPLOCALDESCR',
+            'YearBlt',
+            'UNITS',
+            'RESSTYLE',
+            'Rooms',
+            'Beds',
+            'Baths',
+            'MAILCITY',
+            'MAILSTATE',
+            'MAILZIPCODE',
+        ]
+        self.querying_table_columns = [col for col in self.get_table_column_titles(table_name) if col not in unneeded_columns]
         self.querying_table_name = table_name.replace(' ', '')
         self.left_column_values.clear()
         self.right_column_values.clear()
@@ -79,20 +142,15 @@ class Template(QMainWindow):
         right_layout = QFormLayout()
         right_layout.setFormAlignment(Qt.AlignmentFlag.AlignAbsolute)
         for count, column_name in enumerate(self.querying_table_columns):
-            if 'date' in column_name or 'Date' in column_name or 'DATE' in column_name:
-                field = QDateEdit()
-            elif column_name == 'SupervisionStart':
-                field = QDateEdit()
-            else:
+            if column_name in dropdown_columns:
                 possible_values = self.query_database(f'SELECT DISTINCT {column_name} FROM {self.querying_table_name};')
-                if len(possible_values) < 5000:
-                    field = QComboBox()
-                    field.addItems([i[0] for i in possible_values if str(i[0]).strip() != ''])
-                    field.setEditable(True)
-                    field.setEditText('')
-                    field.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
-                else:
-                    field = QLineEdit()
+                field = QComboBox()
+                field.addItems([str(i[0]) for i in possible_values if str(i[0]).strip() != ''])
+                field.setEditable(True)
+                field.setEditText('')
+                field.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+            else:
+                field = QLineEdit()
             name = QLabel(column_name)
             if count % 2 == 0:  
                 left_layout.addRow(name, field)
@@ -115,10 +173,10 @@ class Template(QMainWindow):
         main_widget.setLayout(main_layout)
         self.setCentralWidget(main_widget)
 
-    def swap_to_main_layout(self) -> None:
+    def swap_to_message_layout(self, message:str) -> None:
         layout = QHBoxLayout()
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(QLabel("Select a table from the ribbon to run queries against it."))
+        layout.addWidget(QLabel(message))
         widget = QWidget()
         widget.setLayout(layout)
         self.setCentralWidget(widget)
