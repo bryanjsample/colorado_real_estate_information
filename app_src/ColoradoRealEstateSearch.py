@@ -143,9 +143,10 @@ class Template(QMainWindow):
         right_layout.setFormAlignment(Qt.AlignmentFlag.AlignAbsolute)
         for count, column_name in enumerate(self.querying_table_columns):
             if column_name in dropdown_columns:
-                possible_values = self.query_database(f'SELECT DISTINCT {column_name} FROM {self.querying_table_name};')
+                possible_values = [str(i[0]).strip() for i in self.query_database(f'SELECT DISTINCT {column_name} FROM {self.querying_table_name};') if str(i[0]).strip() != '']
+                possible_values.sort()
                 field = QComboBox()
-                field.addItems([str(i[0]) for i in possible_values if str(i[0]).strip() != ''])
+                field.addItems(possible_values)
                 field.setEditable(True)
                 field.setEditText('')
                 field.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
@@ -185,11 +186,11 @@ class Template(QMainWindow):
         table = QTableWidget()
         table.setRowCount(len(results))
         if self.querying_table_name == 'ElPasoCountyParcels':
-            table.setColumnCount(len(self.querying_table_columns)) #type: ignore
-            headers = self.querying_table_columns
+            headers = self.get_table_column_titles(self.querying_table_name)
+            table.setColumnCount(len(headers)) #type: ignore
         else:
-            table.setColumnCount(len(self.querying_table_columns) + 1) #type: ignore
-            headers = ['Google Link'] + self.querying_table_columns #type: ignore
+            headers = ['Google Link'] + self.get_table_column_titles(self.querying_table_name) #type: ignore
+            table.setColumnCount(len(headers) + 1) #type: ignore
         table.setHorizontalHeaderLabels(headers) #type: ignore
         for row_i, row in enumerate(results):
             if self.querying_table_name == 'ElPasoCountyParcels':
