@@ -2,7 +2,7 @@
 
 ## Installation
 
-1. Click on `Tags` link underneath `Releases` on the righthand side of the browser.
+1. Select the latest `Release` from the righthand side of the browser.
 2. Download the appropriate executable file.
 
 ## Usage
