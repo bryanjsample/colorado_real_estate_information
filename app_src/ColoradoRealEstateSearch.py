@@ -6,15 +6,18 @@ import sys
 import webbrowser
 
 from typing import List, Any, Dict
+import PySide6
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction
-from PySide6.QtWidgets import (QMainWindow, QApplication, QFileDialog, QLabel, QTableWidget, QTableWidgetItem, QDateEdit, QFormLayout, QHBoxLayout, QVBoxLayout, QWidget, QLineEdit, QPushButton, QToolBar, QStatusBar)
+from PySide6.QtWidgets import (QMainWindow, QApplication, QFileDialog, QLabel, QTableWidget, QTableWidgetItem, QDateEdit, QFormLayout, QHBoxLayout, QVBoxLayout, QWidget, QLineEdit, QPushButton, QComboBox, QToolBar, QStatusBar)
 from datetime import datetime
 
 # macos
 # pyinstaller --onefile --windowed -i images/MyIcon.icns --add-data real_estate_info.db:. ColoradoRealEstateSearch.py
 # windows
 # python -m PyInstaller --onefile -i images/icon32.ico --add-data real_estate_info.db:. ColoradoRealEstateSearch.py
+# linux
+# pyinstaller --onefile --add-data real_estate_info.db:. ColoradoRealEstateSearch.py
 
 class Template(QMainWindow):
     def __init__(self) -> None:
@@ -38,10 +41,10 @@ class Template(QMainWindow):
             self.create_toolbar_actions(table_name, toolbar_button, toolbar)
         self.setStatusBar(QStatusBar(self))
         self.swap_to_main_layout()
-        self.left_column_values:List[tuple[str, QLineEdit]] = []
-        self.right_column_values:List[tuple[str, QLineEdit]] = []
-        self.querying_table_name = None
-        self.querying_table_columns = None
+        self.left_column_values:List[Any] = []
+        self.right_column_values:List[Any] = []
+        self.querying_table_name:str | None = None
+        self.querying_table_columns: List[Any] = []
         self.querying_table_google_links:Dict[int, str] = {}
         self.path_to_app = self.resolve_app_path()
 
@@ -58,10 +61,10 @@ class Template(QMainWindow):
 
     def resolve_app_path(self) -> str:
         if getattr(sys, 'frozen', False):
-            app_path = sys._MEIPASS
+            app_path = sys._MEIPASS # type: ignore 
         elif __file__:
             app_path = os.path.dirname(os.path.abspath(__file__))
-        return app_path
+        return app_path # type: ignore
 
     def swap_to_query_layout(self, table_name:str) -> None:
         self.setWindowTitle(f'Query {table_name}')
@@ -78,10 +81,20 @@ class Template(QMainWindow):
         for count, column_name in enumerate(self.querying_table_columns):
             if 'date' in column_name or 'Date' in column_name or 'DATE' in column_name:
                 field = QDateEdit()
+            elif column_name == 'SupervisionStart':
+                field = QDateEdit()
             else:
-                field = QLineEdit()
+                possible_values = self.query_database(f'SELECT DISTINCT {column_name} FROM {self.querying_table_name};')
+                if len(possible_values) < 5000:
+                    field = QComboBox()
+                    field.addItems([i[0] for i in possible_values if str(i[0]).strip() != ''])
+                    field.setEditable(True)
+                    field.setEditText('')
+                    field.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+                else:
+                    field = QLineEdit()
             name = QLabel(column_name)
-            if count % 2 == 0:
+            if count % 2 == 0:  
                 left_layout.addRow(name, field)
                 self.left_column_values.append((column_name, field))
             else:
@@ -114,12 +127,12 @@ class Template(QMainWindow):
         table = QTableWidget()
         table.setRowCount(len(results))
         if self.querying_table_name == 'ElPasoCountyParcels':
-            table.setColumnCount(len(self.querying_table_columns))
+            table.setColumnCount(len(self.querying_table_columns)) #type: ignore
             headers = self.querying_table_columns
         else:
-            table.setColumnCount(len(self.querying_table_columns) + 1)
-            headers = ['Google Link'] + self.querying_table_columns
-        table.setHorizontalHeaderLabels(headers)
+            table.setColumnCount(len(self.querying_table_columns) + 1) #type: ignore
+            headers = ['Google Link'] + self.querying_table_columns #type: ignore
+        table.setHorizontalHeaderLabels(headers) #type: ignore
         for row_i, row in enumerate(results):
             if self.querying_table_name == 'ElPasoCountyParcels':
                 for column_i, column in enumerate(row):
@@ -127,7 +140,7 @@ class Template(QMainWindow):
                     table.setItem(row_i, column_i, item)
             else:
                 google_link = self.get_google_search_link(row)
-                self.add_link_to_dict(row_i, google_link)
+                self.add_link_to_dict(row_i, google_link) #type: ignore
                 link_item = QTableWidgetItem('Double Click to Google')
                 table.setItem(row_i, 0, link_item)
                 for column_i, column in enumerate(row):
@@ -151,7 +164,7 @@ class Template(QMainWindow):
         file_path_and_name = QFileDialog.getSaveFileName(self, self.tr('Select Location for CSV File'), csv_name)
         with open(file_path_and_name[0], 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f, quoting=csv.QUOTE_ALL)
-            writer.writerow(self.querying_table_columns)
+            writer.writerow(self.querying_table_columns) #type: ignore
             writer.writerows(results)
 
     def get_table_column_titles(self, table_name:str) -> List[str]:
@@ -163,7 +176,7 @@ class Template(QMainWindow):
         cursor.close()
         return names
 
-    def get_google_search_link(self, row:List[str]) -> str:
+    def get_google_search_link(self, row:List[str]) -> str | bool:
         if self.querying_table_name == 'ElPasoCountyParcels':
             return False
         elif self.querying_table_name in ['ActiveAssociateBrokers', 'ActiveIndividualProprietors', 'ActiveResponsibleBrokers']:
@@ -181,7 +194,7 @@ class Template(QMainWindow):
         else:
             zip_index = self.querying_table_columns.index('ZipCode')
         zip_code = str(row[zip_index])
-        name = '+'.join(name)
+        name = '+'.join(name) #type: ignore
         return f'https://www.google.com/search?q={name}+{zip_code}'
     
     def add_link_to_dict(self, row_i:int, google_link:str) -> None:
@@ -198,7 +211,13 @@ class Template(QMainWindow):
         condition_columns = []
         condition_values = []
         for column_name, query_value in self.left_column_values:
-            stripped_value = query_value.text().strip()
+            if type(query_value) is QComboBox:
+                stripped_value = query_value.currentText()
+            elif type(query_value) is QLineEdit or type(query_value) is QDateEdit:
+                stripped_value = query_value.text().strip()
+            else:
+                stripped_value = ''
+                print('Error assessing query value type line 210 ish')
             if stripped_value != '':
                 if stripped_value in ['1/1/00', '1/1/2000']:
                     continue
@@ -206,7 +225,14 @@ class Template(QMainWindow):
                     condition_columns.append(column_name)
                     condition_values.append(stripped_value)
         for column_name, query_value in self.right_column_values:
-            stripped_value = query_value.text().strip()
+            if type(query_value) is QComboBox:
+                stripped_value = query_value.currentText()
+            elif type(query_value) is QLineEdit or type(query_value) is QDateEdit:
+                stripped_value = query_value.text().strip()
+            else:
+                stripped_value = ''
+                print('Error assessing query value type line 210 ish')
+
             if stripped_value != '':
                 if stripped_value in ['1/1/00', '1/1/2000']:
                     continue
@@ -225,10 +251,13 @@ class Template(QMainWindow):
             row_strs = [str(i) for i in row]
             print('  |  '.join(row_strs))
 
-    def query_database(self, sql_statement:str, condition_values:list|None=None) -> List[Any]:
+    def query_database(self, sql_statement:str, condition_values:List[Any]|None=None) -> List[Any]:
         conn = sqlite3.connect(os.path.join(self.path_to_app, 'real_estate_info.db'))
         cursor = conn.cursor()
-        cursor.execute(sql_statement, condition_values)
+        if condition_values:
+            cursor.execute(sql_statement, condition_values) #type: ignore
+        else:
+            cursor.execute(sql_statement)
         results = cursor.fetchall()
         cursor.close()
         return results
